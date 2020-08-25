@@ -1,0 +1,106 @@
+---
+
+- name: Generate elasticsearch needed certificates
+  hosts: localhost
+  tasks:
+
+  - name: Generate CA private key
+    become: false
+    local_action:
+      module: openssl_privatekey
+      path: "{{ data_ssl_local_dir }}/{{ data_ssl_ca_key }}"
+    tags:
+      - certificates
+      - ca
+  
+  ## Key usage, as defined in RFC-3280 ( http://www.ietf.org/rfc/rfc3280.txt ), 4.2.1.3 section
+  - name: Generate CA CSR
+    become: false
+    local_action:
+      module: openssl_csr
+      state: present
+      path: "{{ data_ssl_local_dir }}/{{ data_ssl_ca_csr }}"
+      privatekey_path: "{{ data_ssl_local_dir }}/{{ data_ssl_ca_key }}"
+      common_name: "{{ data_ssl_ca_cn }}"
+      basic_constraints:
+        - CA:TRUE
+      basic_constraints_critical: true
+      key_usage:
+        - keyCertSign
+        - cRLSign
+      key_usage_critical: true
+      extended_key_usage:
+        - clientAuth
+        - serverAuth
+      force: false
+    tags:
+      - certificates
+      - ca
+
+  - name: Generate a Self Signed CA certificate
+    become: false
+    local_action:
+      module: openssl_certificate
+      state: present
+      path: "{{ data_ssl_local_dir }}/{{ data_ssl_ca_cert }}"
+      privatekey_path: "{{ data_ssl_local_dir }}/{{ data_ssl_ca_key }}"
+      csr_path: "{{ data_ssl_local_dir }}/{{ data_ssl_ca_csr }}"
+      provider: selfsigned
+      force: false
+    tags:
+      - certificates
+      - ca
+
+
+- name: Generate elasticsearch transport certificates
+  hosts: elasticsearch
+  gather_facts: True
+  pre_tasks:
+
+  - set_fact:
+      data_ssl_transport_ips: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host]['ansible_default_ipv4']['address']) }}{% endfor %}{{ addresses | unique }}"
+
+  tasks:
+
+  - name: Generate client transport certificate private key
+    become: false
+    local_action:
+      module: openssl_privatekey
+      path: "{{ data_ssl_local_dir }}/{{ data_ssl_transport_key }}"
+    tags:
+      - certificates
+      - transport
+  
+  - name: Generate client certificate CSR
+    become: false
+    local_action:
+      module: openssl_csr
+      path: "{{ data_ssl_local_dir }}/{{ data_ssl_transport_csr }}"
+      privatekey_path: "{{ data_ssl_local_dir }}/{{ data_ssl_transport_key }}"
+      common_name: "{{ data_ssl_transport_cn }}"
+      #subject_alt_name: "{{ groups[etcd_hosts_group] | map('regex_replace', '^', 'DNS:') | list }}"
+      subject_alt_name: "{% for node in data_ssl_transport_ips %}IP:{{ node }}{% if loop.index < data_ssl_transport_ips|length %},{% endif %}{% endfor %}"
+      basic_constraints:
+        - CA:FALSE
+      basic_constraints_critical: true
+      extended_key_usage:
+        - clientAuth
+        - serverAuth
+      force: false
+    tags:
+      - certificates
+      - transport
+
+  - name: Generate peer certificate
+    become: false
+    local_action:
+      module: openssl_certificate
+      path: "{{ data_ssl_local_dir }}/{{ data_ssl_transport_cert }}"
+      csr_path: "{{ data_ssl_local_dir }}/{{ data_ssl_transport_csr }}"
+      ownca_path: "{{ data_ssl_local_dir }}/{{ data_ssl_ca_cert }}"
+      ownca_privatekey_path: "{{ data_ssl_local_dir }}/{{ data_ssl_ca_key }}"
+      provider: ownca
+      force: false
+    tags:
+      - certificates
+      - transport

@@ -1,0 +1,24 @@
+---
+
+public:
+  children:
+    tag_exposition_public:
+
+private:
+  children:
+    tag_exposition_private:
+
+elk:
+  children:
+    tag_stack_elk:
+    kibana:
+      children:
+        tag_application_kibana:
+    elasticsearch:
+      children:
+        tag_application_elasticsearch:
+    logstash:
+      children:
+        tag_application_elasticsearch:
+    metricbeat:
+    filebeat:

@@ -1,0 +1,148 @@
+--- 
+
+- name: ELK kibana setup
+  gather_facts: true
+  hosts: kibana
+  become: true
+
+  roles:
+  
+    - role: ansible-role-kibana
+      kibana_cluster_name: clustermicro
+      kibana_network_address: "{{ hostvars[ inventory_hostname ]['ansible_default_ipv4'] }}"
+      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host]['ansible_default_ipv4']) }}{% endfor %}{{ addresses | unique }}"
+      kibana_docker_image: docker.elastic.co/kibana/kibana:
+      kibana_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      kibana_force_keystore_write: False
+      
+- name: ELK elasticsearch setup
+  gather_facts: True
+  hosts: elasticsearch
+  become: True
+
+  roles:
+
+    - role: ansible-role-elasticsearch
+      elasticsearch_cluster_name: clustermicro
+      elasticsearch_network_name: DOCKER_BACKEND
+      elasticsearch_network_address: "{{ hostvars[ inventory_hostname ][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr'] }}"
+      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      elasticsearch_docker_image: registry.smartdigits.io/infra/elasticsearch
+      elasticsearch_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      elasticsearch_docker_container_memory: 8192
+      elasticsearch_docker_container_cpu_count: 2
+      elasticsearch_docker_security_auth_ldap_hosts:
+        - "ldap://replicahi.hi.inet:389"
+      elasticsearch_docker_security_auth_ldap_base_dn: "o=TID"
+      elasticsearch_license_enabled: True
+      elasticsearch_lvm_storage_enable: True
+      elasticsearch_lvm_storage_pv_devices: [ "/dev/vdd" ]
+      elasticsearch_lvm_storage_lv_size: 15G
+      elasticsearch_users_internal_pass_change: True
+      elasticsearch_users_create: True
+      elasticsearch_users_file: users/definition.yml
+      elasticsearch_roles_file: roles/definition.yml
+      elasticsearch_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/elasticsearch/certificates/"
+      elasticsearch_notification_mail_server: mailhost.hi.inet
+      elasticsearch_monitoring_enable: False
+      elasticsearch_monitoring_hosts: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      elasticsearch_force_keystore_create: False
+      elasticsearch_metricbeat_monitoring_enabled: True
+      elasticsearch_users_file: "{{ lookup('env', 'PWD') }}/files/elasticsearch/users/definition.yml"
+      elasticsearch_roles_file: "{{ lookup('env', 'PWD') }}/files/elasticsearch/roles/definition.yml"
+
+- name: ELK logstash setup
+  gather_facts: True
+  hosts: logstash
+  become: True
+
+  roles:
+
+    - role: ansible-role-logstash
+      logstash_cluster_name: clustermicro
+      logstash_network_name: DOCKER_BACKEND
+      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      logstash_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      kibana_logstash_pipeline_enable: True
+      kibana_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      logstash_kibana_version: "{{ elk_stack_version|default('7.4.0') }}"
+      kibana_network_address: "{{ hostvars[groups[kibana_group][0]][ cloud.provider ]['addresses'][kibana_network_name][0]['addr'] }}" 
+      logstash_network_address: "{{ hostvars[ inventory_hostname ][ cloud.provider ]['addresses'][logstash_network_name][0]['addr'] }}"
+      logstash_certificate_auth_copy: True
+      logstash_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/logstash/certificates"
+      logstash_kibana_pipeline_templates_dir: "{{ lookup('env', 'PWD') }}/files/logstash/pipelines"
+      logstash_kibana_pipeline_enable: True
+      logstash_docker_container_cpu_count: 2
+      logstash_docker_container_memory: 4096
+      logstash_network_ports: [ 5044, 5045, 5046 ]
+
+- name: ELK beats setup
+  gather_facts: True
+  hosts: all
+  become: True
+
+  roles:
+  
+    - role: ansible-role-filebeat
+      filebeat_cluster_name: clustermicro
+      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      logstash_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[logstash_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      filebeat_docker_image: registry.smartdigits.io/infra/filebeat
+      filebeat_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      filebeat_setup_template: True
+      filebeat_output_elasticsearch: False      
+      filebeat_output_logstash: True
+      filebeat_monitoring_enable: False
+      filebeat_force_keystore_write: False
+      filebeat_docker_security_opts:
+        - label:type:container_runtime_t
+      filebeat_elasticsearch_monitoring_hosts: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      logstash_network_port: 5044
+      filebeat_http_enabled: True
+      filebeat_http_port: 9602
+
+    - role: ansible-role-metricbeat
+      metricbeat_cluster_name: clustermicro
+      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      kibana_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[kibana_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][kibana_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      logstash_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[logstash_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      metricbeat_docker_image: registry.smartdigits.io/infra/metricbeat
+      metricbeat_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      metricbeat_setup_ilm: False
+      metricbeat_setup_dashboards: False
+      metricbeat_setup_template: True
+      metricbeat_output_elasticsearch: True
+      metricbeat_output_logstash: False
+      metricbeat_monitoring_enable: False
+      metricbeat_force_keystore_write: False
+      metricbeat_docker_security_opts:
+        - label:type:container_runtime_t
+      metricbeat_elasticsearch_monitoring_hosts: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      metricbeat_module_docker_period: 30s
+      metricbeat_module_system_period: 30s
+      logstash_network_port: 5045
+      metricbeat_http_enabled: True
+      metricbeat_http_port: 9601
+      metricbeat_monitoring_heartbeat_http_port: 9603
+      metricbeat_monitoring_filebeat_http_port: 9602
+      metricbeat_monitoring_metricbeat_http_port: 9601
+
+    - role: ansible-role-heartbeat
+      heartbeat_cluster_name: clustermicro
+      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      kibana_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[kibana_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][kibana_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      logstash_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[logstash_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      heartbeat_docker_image: registry.smartdigits.io/infra/heartbeat
+      heartbeat_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      heartbeatbeat_setup_ilm: false
+      heartbeat_setup_dashboards: False
+      heartbeat_setup_template: True
+      heartbeat_output_elasticsearch: True
+      heartbeat_output_logstash: False
+      heartbeat_monitoring_enable: False
+      heartbeat_force_keystore_write: False
+      heartbeat_docker_security_opts:
+        - label:type:container_runtime_t
+      heartbeat_elasticsearch_monitoring_hosts: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host][ cloud.provider ]['addresses'][elasticsearch_network_name][0]['addr']) }}{% endfor %}{{ addresses | unique }}"
+      heartbeat_http_enabled: True
+      heartbeat_http_port: 9603

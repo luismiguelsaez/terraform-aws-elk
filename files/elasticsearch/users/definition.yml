@@ -1,0 +1,55 @@
+---
+
+users:
+
+  - logstash_admin_user:
+      password: kog7gueN
+      roles:
+        - logstash_admin
+        - logstash_writter
+        - metricbeat_writter
+        - heartbeat_writter
+      full_name: Logstash centralized admin user
+      email: test@dummy.es
+
+  - logstash_writter:
+      password: kog7gueN
+      roles:
+        - logstash_writter
+      full_name: Logstash log forwarder
+      email: test@dummy.es
+
+  - filebeat_writter:
+      password: tckTHOXugBr3X9F9
+      roles:
+        - filebeat_writter
+      full_name: Filebeat log forwarder
+      email: test@dummy.es
+
+  - metricbeat_writter:
+      password: tckTHOXugBr3X9F9
+      roles:
+        - metricbeat_writter
+        - remote_monitoring_agent
+        - remote_monitoring_collector
+      full_name: Metricbeat forwarder
+      email: test@dummy.es
+
+  - heartbeat_writter:
+      password: tckTHOXugBr3X9F9
+      roles:
+        - metricbeat_writter
+      full_name: Heartbeat forwarder
+      email: test@dummy.es
+
+  - remote_monitor:
+      password: r4m0t3MOn1T0r
+      roles:
+        - remote_monitoring_agent
+      full_name: ES remote monitoring
+
+  - api_monitoring:
+      password: 4p1M0n1t0R
+      roles:
+        - api_monitoring
+      full_name: API monitoring user ( kibana / elasticsearch )

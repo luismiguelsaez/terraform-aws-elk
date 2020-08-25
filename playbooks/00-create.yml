@@ -1,0 +1,47 @@
+---
+
+- name: Infrastructure deployment
+  gather_facts: false
+  hosts: localhost
+  connection: local
+  tasks:
+
+    - name: Execute terraform apply
+      terraform:
+        project_path: '../terraform'
+        state: present
+        force_init: True
+      register: terraform_output
+
+    - name: Print terrform outputs
+      debug:
+        msg: "{{ terraform_output.outputs }}"
+
+    - name: Get ssh private key content
+      copy:
+        content: "{{ terraform_output.outputs.ssh_private_key.value }}"
+        dest: "{{ lookup('env', 'PWD') }}/ssh/keys/default.pem"
+        mode: 0600
+
+    - name: Create bastion ssh config
+      copy:
+        dest: "{{ lookup('env', 'PWD') }}/ssh/bastion.config"
+        content: |
+          Host *
+            # Security
+            ForwardAgent no
+            # Connection multiplexing
+            ControlMaster auto
+            ControlPersist 2m
+            ControlPath ~/.ssh/ansible-%r@%h:%p
+            # Connect through bastion hosts
+            ProxyCommand ssh -i ./ssh/keys/default.pem -W %h:%p ec2-user@{{ terraform_output.outputs.instances_bastion_public_ip.value }}
+
+    - name: Ensure SSH key permissions
+      file:
+        path: "{{ lookup('env', 'PWD') }}/ssh/keys/default.pem"
+        mode: 0600
+
+
+- import_playbook: 04-elk-gen-elasticsearch-certificates.yml
+- import_playbook: 06-elk-stack-elasticsearch.yml

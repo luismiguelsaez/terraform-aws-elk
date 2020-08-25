@@ -1,0 +1,42 @@
+---
+
+cloud:
+  provider: aws
+
+# Ansible
+
+#ansible_python_interpreter: /usr/bin/python3
+
+# Common ELK stack variables used by components
+
+elk_stack_version: 7.7.1
+elasticsearch_group: elasticsearch
+elasticsearch_network_port: 9200
+#elasticsearch_security_http_enabled: true
+elasticsearch_certificate_ca_file_ingest: ESca.crt
+elasticsearch_certificate_ca_file_monitoring: ESMONca.crt
+elasticsearch_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/elasticsearch/certificates/"
+logstash_group: logstash
+logstash_network_port: 5044
+logstash_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/logstash/certificates"
+kibana_group: kibana
+kibana_cluster_name: clustermicro
+kibana_network_port: 5601
+
+# Certificates configuration variables
+
+data_ssl_local_dir: "{{ lookup('env', 'PWD') }}/files/elasticsearch/certificates"
+data_ssl_ca_key: ESca.key
+data_ssl_ca_csr: ESca.csr
+data_ssl_ca_cn: Elasticsearch
+data_ssl_ca_cert: ESca.crt
+data_ssl_transport_key: instance.key
+data_ssl_transport_csr: instance.csr
+data_ssl_transport_cert: instance.crt
+data_ssl_transport_cn: Elasticsearch
+data_ssl_dir: "{{ lookup('env', 'PWD') }}/files/logstash/certificates"
+data_ssl_peer_dir: "{{ lookup('env', 'PWD') }}/files/logstash/certificates"
+data_ssl_peer_key: server.key
+data_ssl_peer_csr: server.csr
+data_ssl_peer_cert: server.crt
+data_ssl_peer_cn: intance

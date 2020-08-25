@@ -1,0 +1,61 @@
+---
+
+- name: Generate logstash peer certificates
+  hosts: logstash
+  gather_facts: True
+  pre_tasks:
+
+  - set_fact:
+      data_ssl_peer_ips: "{% set addresses = [] %}{% for host in groups[logstash_group] %}{{ addresses.append(hostvars[host]['ansible_default_ipv4']['address']) }}{% endfor %}{{ addresses | unique }}"
+
+  tasks:
+
+  - name: Generate peer certificate private key
+    become: false
+    local_action:
+      module: openssl_privatekey
+      path: "{{ data_ssl_dir }}/{{ data_ssl_peer_key | regex_replace('^(.*)\\.(.*)$', '\\1-rsa.\\2') }}"
+      size: 2048
+    register: create_peer_key
+    tags:
+      - certificates
+      - client
+
+  - name: Convert RSA key to PKCS8 format
+    local_action:
+      module: command
+      cmd: "openssl pkcs8 -topk8 -in {{ data_ssl_dir }}/{{ data_ssl_peer_key | regex_replace('^(.*)\\.(.*)$', '\\1-rsa.\\2') }} -out {{ data_ssl_dir }}/{{ data_ssl_peer_key }} -nocrypt"
+    when: create_peer_key.changed
+
+  - name: Generate peer certificate CSR
+    become: false
+    local_action:
+      module: openssl_csr
+      path: "{{ data_ssl_dir }}/{{ data_ssl_peer_csr }}"
+      privatekey_path: "{{ data_ssl_dir }}/{{ data_ssl_peer_key }}"
+      common_name: "{{ data_ssl_peer_cn|default( ansible_hostname ) }}"
+      subject_alt_name: "{% for node in data_ssl_peer_ips %}IP:{{ node }}{% if loop.index < data_ssl_peer_ips|length %},{% endif %}{% endfor %}"
+      basic_constraints:
+        - CA:FALSE
+      basic_constraints_critical: true
+      #extended_key_usage:
+      #  - clientAuth
+      #  - serverAuth
+      force: false
+    tags:
+      - certificates
+      - client
+
+  - name: Generate peer certificate
+    become: false
+    local_action:
+      module: openssl_certificate
+      path: "{{ data_ssl_dir }}/{{ data_ssl_peer_cert }}"
+      csr_path: "{{ data_ssl_dir }}/{{ data_ssl_peer_csr }}"
+      ownca_path: "{{ data_ssl_local_dir }}/{{ data_ssl_ca_cert }}"
+      ownca_privatekey_path: "{{ data_ssl_local_dir }}/{{ data_ssl_ca_key }}"
+      provider: ownca
+      force: false
+    tags:
+      - certificates
+      - client

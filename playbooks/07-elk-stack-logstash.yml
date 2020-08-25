@@ -1,0 +1,24 @@
+- name: ELK logstash setup
+  gather_facts: True
+  hosts: logstash
+  become: True
+
+  roles:
+
+    - role: ansible-role-logstash
+      logstash_cluster_name: clustermicro
+      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[ host ]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      logstash_docker_image: docker.elastic.co/logstash/logstash
+      logstash_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      kibana_logstash_pipeline_enable: True
+      kibana_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      logstash_kibana_version: "{{ elk_stack_version|default('7.4.0') }}"
+      kibana_network_address: "{{ hostvars[groups[kibana_group][0]]['private_ip_address'] }}" 
+      logstash_network_address: "{{ hostvars[ inventory_hostname ]['private_ip_address'] }}"
+      logstash_certificate_auth_copy: True
+      logstash_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/logstash/certificates"
+      logstash_kibana_pipeline_templates_dir: "{{ lookup('env', 'PWD') }}/files/logstash/pipelines"
+      logstash_kibana_pipeline_enable: True
+      logstash_docker_container_cpu_count: 2
+      logstash_docker_container_memory: 4096
+      logstash_network_ports: [ 5044, 5045, 5046 ]

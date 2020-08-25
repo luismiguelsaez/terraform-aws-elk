@@ -1,0 +1,70 @@
+- name: ELK beats setup
+  gather_facts: True
+  hosts: elk
+  become: True
+
+  roles:
+  
+    - role: ansible-role-filebeat
+      filebeat_cluster_name: clustermicro
+      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[ host ]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      logstash_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[logstash_group] %}{{ addresses.append(hostvars[host]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      filebeat_docker_image: docker.elastic.co/beats/filebeat
+      filebeat_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      filebeat_setup_template: True
+      filebeat_output_elasticsearch: False      
+      filebeat_output_logstash: True
+      filebeat_monitoring_enable: False
+      filebeat_force_keystore_write: False
+      filebeat_docker_security_opts:
+        - label:type:container_runtime_t
+      filebeat_elasticsearch_monitoring_hosts: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      logstash_network_port: 5044
+      filebeat_http_enabled: True
+      filebeat_http_port: 9602
+
+    - role: ansible-role-metricbeat
+      metricbeat_cluster_name: clustermicro
+      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[ host ]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      kibana_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[kibana_group] %}{{ addresses.append(hostvars[host]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      logstash_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[logstash_group] %}{{ addresses.append(hostvars[host]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      metricbeat_docker_image: docker.elastic.co/beats/metricbeat
+      metricbeat_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      metricbeat_setup_ilm: False
+      metricbeat_setup_dashboards: False
+      metricbeat_setup_template: True
+      metricbeat_output_elasticsearch: True
+      metricbeat_output_logstash: False
+      metricbeat_monitoring_enable: False
+      metricbeat_force_keystore_write: False
+      metricbeat_docker_security_opts:
+        - label:type:container_runtime_t
+      metricbeat_elasticsearch_monitoring_hosts: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      metricbeat_module_docker_period: 30s
+      metricbeat_module_system_period: 30s
+      logstash_network_port: 5045
+      metricbeat_http_enabled: True
+      metricbeat_http_port: 9601
+      metricbeat_monitoring_heartbeat_http_port: 9603
+      metricbeat_monitoring_filebeat_http_port: 9602
+      metricbeat_monitoring_metricbeat_http_port: 9601
+
+    #- role: ansible-role-heartbeat
+    #  heartbeat_cluster_name: clustermicro
+    #  elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[ host ]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+    #  kibana_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[kibana_group] %}{{ addresses.append(hostvars[host]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+    #  logstash_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[logstash_group] %}{{ addresses.append(hostvars[host]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+    #  heartbeat_docker_image: docker.elastic.co/beats/heartbeat
+    #  heartbeat_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+    #  heartbeatbeat_setup_ilm: false
+    #  heartbeat_setup_dashboards: False
+    #  heartbeat_setup_template: True
+    #  heartbeat_output_elasticsearch: True
+    #  heartbeat_output_logstash: False
+    #  heartbeat_monitoring_enable: False
+    #  heartbeat_force_keystore_write: False
+    #  heartbeat_docker_security_opts:
+    #    - label:type:container_runtime_t
+    #  heartbeat_elasticsearch_monitoring_hosts: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[host]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+    #  heartbeat_http_enabled: True
+    #  heartbeat_http_port: 9603

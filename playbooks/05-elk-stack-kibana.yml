@@ -1,0 +1,16 @@
+--- 
+
+- name: ELK kibana setup
+  gather_facts: true
+  hosts: kibana
+  become: true
+
+  roles:
+  
+    - role: ansible-role-kibana
+      kibana_cluster_name: clustermicro
+      kibana_network_address: "{{ hostvars[ inventory_hostname ]['private_ip_address'] }}"
+      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[ host ]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      kibana_docker_image: docker.elastic.co/kibana/kibana
+      kibana_docker_tag: "{{ elk_stack_version|default('7.4.0') }}"
+      kibana_force_keystore_write: True
