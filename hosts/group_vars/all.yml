@@ -15,7 +15,7 @@ elasticsearch_network_port: 9200
 #elasticsearch_security_http_enabled: true
 elasticsearch_certificate_ca_file_ingest: ESca.crt
 elasticsearch_certificate_ca_file_monitoring: ESMONca.crt
-elasticsearch_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/elasticsearch/certificates/"
+#elasticsearch_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/elasticsearch/certificates/"
 logstash_group: logstash
 logstash_network_port: 5044
 logstash_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/logstash/certificates"

@@ -44,4 +44,5 @@
 
 
 - import_playbook: 04-elk-gen-elasticsearch-certificates.yml
+- import_playbook: 05-elk-stack-kibana.yml
 - import_playbook: 06-elk-stack-elasticsearch.yml

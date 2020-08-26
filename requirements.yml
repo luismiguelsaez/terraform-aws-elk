@@ -4,13 +4,13 @@
   scm: git
   version: master
 
+- src: https://github.com/luismiguelsaez/ansible-role-elk-kibana.git
+  scm: git
+  version: master
+
 - src: https://github.com/h4rdL1nk/ansible-role-logstash.git
   scm: git
   version: pipelines-from-fileglob
-
-- src: https://github.com/h4rdL1nk/ansible-role-kibana.git
-  scm: git
-  version: master
 
 - src: https://github.com/h4rdL1nk/ansible-role-filebeat.git
   scm: git
