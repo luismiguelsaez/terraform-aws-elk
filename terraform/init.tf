@@ -34,7 +34,7 @@ resource "aws_instance" "public" {
   count = 2
 
   ami           = data.aws_ami.default.id
-  instance_type = "t2.micro"
+  instance_type = "t3.small"
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   key_name = aws_key_pair.main.key_name
