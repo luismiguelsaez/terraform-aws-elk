@@ -42,7 +42,9 @@
         path: "{{ lookup('env', 'PWD') }}/ssh/keys/default.pem"
         mode: 0600
 
+    - meta: refresh_inventory
 
 - import_playbook: 04-elk-gen-elasticsearch-certificates.yml
 - import_playbook: 05-elk-stack-kibana.yml
 - import_playbook: 06-elk-stack-elasticsearch.yml
+- import_playbook: 09-elk-stack-agent.yml

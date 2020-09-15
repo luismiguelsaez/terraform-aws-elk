@@ -8,6 +8,10 @@
   scm: git
   version: master
 
+- src: https://github.com/luismiguelsaez/ansible-role-elk-agent.git
+  scm: git
+  version: master
+
 - src: https://github.com/h4rdL1nk/ansible-role-logstash.git
   scm: git
   version: pipelines-from-fileglob

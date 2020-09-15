@@ -12,21 +12,21 @@ users:
       full_name: Logstash centralized admin user
       email: test@dummy.es
 
-  - logstash_writter:
+  - logstash_writer:
       password: kog7gueN
       roles:
         - logstash_writter
       full_name: Logstash log forwarder
       email: test@dummy.es
 
-  - filebeat_writter:
+  - filebeat_writer:
       password: tckTHOXugBr3X9F9
       roles:
         - filebeat_writter
       full_name: Filebeat log forwarder
       email: test@dummy.es
 
-  - metricbeat_writter:
+  - metricbeat_writer:
       password: tckTHOXugBr3X9F9
       roles:
         - metricbeat_writter
@@ -35,7 +35,7 @@ users:
       full_name: Metricbeat forwarder
       email: test@dummy.es
 
-  - heartbeat_writter:
+  - heartbeat_writer:
       password: tckTHOXugBr3X9F9
       roles:
         - metricbeat_writter

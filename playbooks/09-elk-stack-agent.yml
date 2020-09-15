@@ -1,0 +1,14 @@
+--- 
+
+- name: ELK agent setup
+  gather_facts: true
+  hosts: elasticsearch,kibana
+  become: true
+
+  roles:
+  
+    - role: ansible-role-elk-agent
+      agent_cluster_name: clustermicro
+      agent_elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[ host ]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      agent_security_enabled: False
+      agent_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/elasticsearch/certificates/"
