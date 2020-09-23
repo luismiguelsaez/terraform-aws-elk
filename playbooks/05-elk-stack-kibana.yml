@@ -9,6 +9,6 @@
   
     - role: ansible-role-elk-kibana
       kibana_cluster_name: clustermicro
-      kibana_elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_node_ingest_group] %}{{ addresses.append(hostvars[ host ]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      kibana_elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_node_data_group] %}{{ addresses.append(hostvars[ host ]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
       kibana_security_enabled: False
       kibana_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/kibana/certificates/"

@@ -1,3 +1,6 @@
 ---
 
-elasticsearch_node_roles: [ data, master ]
+elasticsearch_node_roles:
+- master
+- data
+- remote_cluster_client

@@ -1,3 +1,6 @@
 ---
 
-elasticsearch_node_roles: [ ingest ]
+elasticsearch_node_roles:
+  - master
+  - ingest
+  - remote_cluster_client

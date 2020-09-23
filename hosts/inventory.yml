@@ -18,9 +18,11 @@ elk:
       children:
         tag_application_elasticsearch:
         data:
-          tag_node_role_data:
+          children:
+            tag_node_role_data:
         ingest:
-          tag_node_role_ingest:
+          children:
+            tag_node_role_ingest:
     logstash:
       children:
         tag_application_elasticsearch:

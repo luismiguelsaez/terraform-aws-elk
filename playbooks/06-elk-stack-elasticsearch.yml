@@ -8,8 +8,8 @@
   roles:
 
     - role: ansible-role-elk-elasticsearch
+      elasticsearch_discovery_seed_hosts: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[ host ]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
       elasticsearch_cluster_name: clustermicro
-      elasticsearch_cluster_hostnames: "{% set hostnames = [] %}{% for host in groups[elasticsearch_group] %}{{ hostnames.append(hostvars[ host ]['ansible_hostname']) }}{% endfor %}{{ hostnames | unique }}"
-      elasticsearch_cluster_network_addresses: "{% set addresses = [] %}{% for host in groups[elasticsearch_group] %}{{ addresses.append(hostvars[ host ]['private_ip_address']) }}{% endfor %}{{ addresses | unique }}"
+      elasticsearch_cluster_initial_master_nodes: "{% set hostnames = [] %}{% for host in groups[elasticsearch_group] %}{% if 'master' in elasticsearch_node_roles %}{{ hostnames.append(hostvars[ host ]['ansible_hostname']) }}{% endif %}{% endfor %}{{ hostnames | unique }}"
       elasticsearch_security_enabled: False
       elasticsearch_certificate_local_dir: "{{ lookup('env', 'PWD') }}/files/elasticsearch/certificates/"

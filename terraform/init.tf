@@ -79,7 +79,7 @@ resource "aws_instance" "private_data" {
 }
 
 resource "aws_instance" "private_ingest" {
-  count = 3
+  count = 2
 
   ami           = data.aws_ami.default.id
   instance_type = "t3.large"
