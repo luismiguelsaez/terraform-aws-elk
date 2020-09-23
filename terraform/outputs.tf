@@ -10,8 +10,12 @@ output "instances_public_ips" {
   value = aws_instance.public.*.private_ip
 }
 
-output "instances_private_ips" {
-  value = aws_instance.private.*.private_ip
+output "instances_private_data_ips" {
+  value = aws_instance.private_data.*.private_ip
+}
+
+output "instances_private_ingest_ips" {
+  value = aws_instance.private_ingest.*.private_ip
 }
 
 output "nat_gateway_public_ip" {

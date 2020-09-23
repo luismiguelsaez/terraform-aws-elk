@@ -11,6 +11,8 @@ cloud:
 
 elk_stack_version: 7.7.1
 elasticsearch_group: elasticsearch
+elasticsearch_node_data_group: data
+elasticsearch_node_ingest_group: ingest
 elasticsearch_network_port: 9200
 #elasticsearch_security_http_enabled: true
 elasticsearch_certificate_ca_file_ingest: ESca.crt

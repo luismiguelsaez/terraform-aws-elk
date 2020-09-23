@@ -39,7 +39,7 @@ resource "aws_instance" "public" {
 
   key_name = aws_key_pair.main.key_name
 
-  user_data = file("files/docker/amazon-linux.sh")
+  #user_data = file("files/docker/amazon-linux.sh")
 
   subnet_id = aws_subnet.public[count.index].id
   vpc_security_group_ids = [aws_security_group.public.id]
@@ -53,7 +53,7 @@ resource "aws_instance" "public" {
   }
 }
 
-resource "aws_instance" "private" {
+resource "aws_instance" "private_data" {
   count = 3
 
   ami           = data.aws_ami.default.id
@@ -63,16 +63,42 @@ resource "aws_instance" "private" {
 
   key_name = aws_key_pair.main.key_name
 
-  user_data = file("files/docker/amazon-linux.sh")
+  #user_data = file("files/docker/amazon-linux.sh")
 
   subnet_id = aws_subnet.private[count.index].id
   vpc_security_group_ids = [aws_security_group.private.id]
 
   tags = {
-    Name        = format("%s-elasticsearch-%02d",var.defaults.environment, count.index + 1)
+    Name        = format("%s-elasticsearch-data-%02d",var.defaults.environment, count.index + 1)
     environment = var.defaults.environment
     exposition  = "private"
     stack       = "elk"
     application = "elasticsearch"
+    node_role   = "data"
+  }
+}
+
+resource "aws_instance" "private_ingest" {
+  count = 3
+
+  ami           = data.aws_ami.default.id
+  instance_type = "t3.large"
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+  associate_public_ip_address = false
+
+  key_name = aws_key_pair.main.key_name
+
+  #user_data = file("files/docker/amazon-linux.sh")
+
+  subnet_id = aws_subnet.private[count.index].id
+  vpc_security_group_ids = [aws_security_group.private.id]
+
+  tags = {
+    Name        = format("%s-elasticsearch-ingest-%02d",var.defaults.environment, count.index + 1)
+    environment = var.defaults.environment
+    exposition  = "private"
+    stack       = "elk"
+    application = "elasticsearch"
+    node_role   = "ingest"
   }
 }
