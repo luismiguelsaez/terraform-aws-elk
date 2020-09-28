@@ -35,12 +35,19 @@
       privatekey_path: "{{ data_ssl_dir }}/{{ data_ssl_peer_key }}"
       common_name: "{{ data_ssl_peer_cn|default( ansible_hostname ) }}"
       subject_alt_name: "{% for node in data_ssl_peer_ips %}IP:{{ node }}{% if loop.index < data_ssl_peer_ips|length %},{% endif %}{% endfor %}"
+      basic_constraints_critical: False
       basic_constraints:
-        - CA:FALSE
-      basic_constraints_critical: true
-      #extended_key_usage:
-      #  - clientAuth
-      #  - serverAuth
+        - CA:FALSE 
+      key_usage_critical: True
+      extended_key_usage_critical: False
+      key_usage:
+        - digitalSignature
+        - nonRepudiation
+        - keyEncipherment
+        - keyAgreement
+      extended_key_usage:
+        - clientAuth
+        - serverAuth
       force: false
     tags:
       - certificates
